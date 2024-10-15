@@ -25,18 +25,22 @@ if ('serviceWorker' in navigator) {
 // }
 
 function scheduleNotification(delay) {
-  const notificationData = {
-    title: 'Reminder',
-    body: 'This is your scheduled notification!',
-    url: 'http://127.0.0.1:5501/index.html',
-  };
+  Notification.requestPermission().then((result) => {
+    if (result === 'granted') {
+      const notificationData = {
+        title: 'Reminder',
+        body: 'This is your scheduled notification!',
+        url: 'http://127.0.0.1:5501/index.html',
+      };
 
-  navigator.serviceWorker.ready.then((registration) => {
-    registration.active.postMessage({
-      action: 'scheduleNotification',
-      delay: delay, // Delay in milliseconds (e.g., 5000 for 5 seconds)
-      notificationData: notificationData,
-    });
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.active.postMessage({
+          action: 'scheduleNotification',
+          delay: delay, // Delay in milliseconds (e.g., 5000 for 5 seconds)
+          notificationData: notificationData,
+        });
+      });
+    }
   });
 
   // if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
