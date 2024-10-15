@@ -1,54 +1,24 @@
-const CACHE_NAME = "demo/v7";
+// Listening for messages from the main app
+self.addEventListener('message', (event) => {
+  const { action, delay, notificationData } = event.data;
 
-const CACHE_FILES = [
-  "./index.html",
-  "./style.css",
-  "./photo.png",
-  "./script.js",
-];
-
-self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll(CACHE_FILES);
-    })
-  );
+  if (action === 'scheduleNotification') {
+    // Set a timeout to show a notification after the specified delay
+    setInterval(() => {
+      self.registration.showNotification(notificationData.title, {
+        body: notificationData.body,
+        icon: notificationData.icon || '/icon.png',
+        badge: notificationData.badge || '/badge.png',
+        data: notificationData.url,
+      });
+    }, delay);
+  }
 });
 
-self.addEventListener("activate", (e) => {
-  // Clean up useless cache
-  e.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key != CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-});
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
 
-self.addEventListener("fetch", (e) => {
-  // Offline exprience
-  // Whenever a file is requested,
-  // 1. fetch from network, update my cache 2. cache as a fallback
-
-  e.respondWith(
-    fetch(e.request)
-      .then((res) => {
-        // update my cache
-        const cloneData = res.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, cloneData);
-        });
-        console.log("returning from network");
-        return res;
-      })
-      .catch(() => {
-        console.log("returning from cache");
-        return caches.match(e.request).then((file) => file);
-      })
-  );
+  const url = event.notification.data;
+  event.waitUntil(clients.openWindow(url));
 });
